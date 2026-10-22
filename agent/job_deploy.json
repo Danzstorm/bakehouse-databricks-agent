@@ -1,0 +1,30 @@
+{
+  "run_name": "bakehouse-agent-log-and-deploy",
+  "tasks": [
+    {
+      "task_key": "deploy",
+      "spark_python_task": {
+        "python_file": "/Workspace/Users/<TU_USUARIO>/bakehouse-agent/log_and_deploy.py",
+        "parameters": [
+          "<WAREHOUSE_ID>",
+          "/Workspace/Users/<TU_USUARIO>/bakehouse-agent"
+        ]
+      },
+      "environment_key": "default"
+    }
+  ],
+  "environments": [
+    {
+      "environment_key": "default",
+      "spec": {
+        "client": "3",
+        "dependencies": [
+          "mlflow>=3.1",
+          "databricks-sdk>=0.40",
+          "pydantic>=2",
+          "databricks-agents>=1.0"
+        ]
+      }
+    }
+  ]
+}

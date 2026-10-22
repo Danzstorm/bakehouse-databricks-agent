@@ -1,0 +1,14 @@
+{
+  "name": "dbw_returns_agent.bakehouse_agent.reviews_index",
+  "endpoint_name": "bakehouse-vs",
+  "primary_key": "review_id",
+  "index_type": "DELTA_SYNC",
+  "delta_sync_index_spec": {
+    "source_table": "dbw_returns_agent.bakehouse_agent.reviews",
+    "pipeline_type": "TRIGGERED",
+    "embedding_source_columns": [
+      {"name": "review", "embedding_model_endpoint_name": "databricks-gte-large-en"}
+    ],
+    "columns_to_sync": ["review_id", "franchiseID", "review_date", "review"]
+  }
+}

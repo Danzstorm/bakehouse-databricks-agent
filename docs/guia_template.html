@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Agente de IA en Azure Databricks — Guía de replicación</title>
+<style>
+  :root{
+    --ink:#1B1F2A; --muted:#5B6372; --line:#E3E6EC; --soft:#F6F7F9;
+    --accent:#E8452C; --accent-d:#B8321D; --accent-soft:#FDEEEA;
+    --blue:#2457C5; --blue-soft:#EAF0FD; --green:#1B7F55; --green-soft:#E7F5EE;
+    --amber:#9A6200; --amber-soft:#FFF4DC; --dark:#11151C;
+  }
+  @page{ size:A4; margin:22mm 18mm 22mm 18mm;
+    @bottom-left{ content:"Bakehouse Analyst · Guía de replicación"; font:8pt "Segoe UI",sans-serif; color:#8A91A0; }
+    @bottom-right{ content:counter(page); font:8pt "Segoe UI",sans-serif; color:#8A91A0; } }
+  @page :first{ margin:0; @bottom-left{content:none} @bottom-right{content:none} }
+  *{ box-sizing:border-box; }
+  html{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  body{ font:10.2pt/1.55 "Segoe UI","Helvetica Neue",Arial,sans-serif; color:var(--ink); margin:0; }
+  h1,h2,h3,h4{ font-family:"Segoe UI Semibold","Segoe UI",Arial,sans-serif; line-height:1.2; margin:0; }
+  p{ margin:0 0 8pt; }
+  a{ color:var(--blue); text-decoration:none; }
+  code{ font:8.8pt "Cascadia Mono",Consolas,"Courier New",monospace; background:var(--soft); padding:1px 4px; border-radius:3px; border:1px solid var(--line); }
+  strong{ font-weight:600; }
+
+  /* ---------- cover ---------- */
+  .cover{ height:297mm; width:210mm; background:var(--dark); color:#fff; position:relative; page-break-after:always; overflow:hidden; }
+  .cover .bar{ position:absolute; left:22mm; top:62mm; width:26mm; height:5px; background:var(--accent); }
+  .cover .kicker{ position:absolute; left:22mm; top:48mm; font:600 9.5pt "Segoe UI"; letter-spacing:.18em; text-transform:uppercase; color:#9AA3B5; }
+  .cover h1{ position:absolute; left:22mm; top:74mm; width:150mm; font-size:36pt; font-weight:700; letter-spacing:-.01em; line-height:1.08; }
+  .cover .sub{ position:absolute; left:22mm; top:128mm; width:140mm; font-size:13pt; color:#C5CBD8; line-height:1.5; }
+  .cover .meta{ position:absolute; left:22mm; right:22mm; bottom:34mm; display:grid; grid-template-columns:repeat(4,1fr); gap:10mm; border-top:1px solid #2A3140; padding-top:7mm; }
+  .cover .meta div b{ display:block; font:600 7.5pt "Segoe UI"; letter-spacing:.14em; text-transform:uppercase; color:#7F8899; margin-bottom:2mm; }
+  .cover .meta div span{ font-size:10.5pt; color:#fff; }
+  .cover .glyph{ position:absolute; right:-30mm; top:-24mm; width:150mm; height:150mm; border-radius:50%; background:radial-gradient(circle at 35% 35%, #2A3346 0, #171C27 62%); opacity:.9; }
+  .cover .glyph2{ position:absolute; right:14mm; top:150mm; width:46mm; height:46mm; border-radius:50%; border:1px solid #2F384B; }
+
+  /* ---------- structure ---------- */
+  .chapter{ break-before:page; }
+  .chapter-head{ display:flex; align-items:flex-end; gap:12pt; padding-bottom:8pt; border-bottom:2px solid var(--ink); margin-bottom:12pt; }
+  .chapter-head .num{ font:700 40pt/0.9 "Segoe UI"; color:var(--accent); letter-spacing:-.02em; min-width:44pt; }
+  .chapter-head h2{ font-size:21pt; letter-spacing:-.01em; }
+  .lead{ font-size:11.3pt; color:#343B4A; margin-bottom:10pt; }
+  h3{ font-size:12.5pt; margin:16pt 0 6pt; }
+  h4{ font-size:10.4pt; margin:12pt 0 4pt; color:var(--accent-d); text-transform:uppercase; letter-spacing:.06em; font-weight:600; }
+  .strip{ display:grid; grid-template-columns:repeat(4,1fr); border:1px solid var(--line); border-radius:6px; overflow:hidden; margin:0 0 12pt; background:var(--soft); }
+  .strip div{ padding:6pt 9pt; border-right:1px solid var(--line); }
+  .strip div:last-child{ border-right:0; }
+  .strip b{ display:block; font:600 7pt "Segoe UI"; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:2pt; }
+  .strip span{ font-size:9.3pt; }
+
+  .toc{ columns:2; column-gap:14mm; margin-top:6pt; }
+  .toc div{ break-inside:avoid; padding:5pt 0; border-bottom:1px solid var(--line); display:flex; gap:9pt; }
+  .toc .n{ font-weight:700; color:var(--accent); min-width:20pt; }
+  .toc small{ display:block; color:var(--muted); font-size:8.6pt; }
+
+  /* ---------- blocks ---------- */
+  pre.code{ margin:6pt 0 10pt; padding:8pt 10pt; background:#F3F4F7; border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:4px; font:8.2pt/1.42 "Cascadia Mono",Consolas,"Courier New",monospace; white-space:pre-wrap; word-break:break-word; overflow-wrap:anywhere; }
+  pre.code.cmd{ background:var(--dark); color:#E8ECF4; border:0; border-left:3px solid var(--accent); break-inside:avoid; }
+  h3,h4{ break-after:avoid; }
+  p:has(+ pre.cmd){ break-after:avoid; }
+  table.keep{ break-inside:avoid; }
+  pre.code.src{ font-size:7.5pt; line-height:1.38; }
+  .callout{ border-radius:5px; padding:7pt 10pt; margin:8pt 0 10pt; border-left:3px solid; break-inside:avoid; }
+  .callout .l{ font:700 7.4pt "Segoe UI"; letter-spacing:.14em; text-transform:uppercase; display:block; margin-bottom:2pt; }
+  .callout.note{ background:var(--blue-soft); border-color:var(--blue); } .callout.note .l{ color:var(--blue); }
+  .callout.warn{ background:var(--amber-soft); border-color:#D99A1E; } .callout.warn .l{ color:var(--amber); }
+  .callout.ok{ background:var(--green-soft); border-color:var(--green); } .callout.ok .l{ color:var(--green); }
+  .callout.cost{ background:var(--accent-soft); border-color:var(--accent); } .callout.cost .l{ color:var(--accent-d); }
+  .callout p:last-child{ margin:0; }
+  table{ width:100%; border-collapse:collapse; margin:6pt 0 12pt; font-size:9.2pt; }
+  th{ text-align:left; font:600 7.8pt "Segoe UI"; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); padding:5pt 7pt; border-bottom:2px solid var(--ink); background:#fff; }
+  td{ padding:5pt 7pt; border-bottom:1px solid var(--line); vertical-align:top; }
+  tr{ break-inside:avoid; }
+  ul,ol{ margin:0 0 9pt; padding-left:16pt; } li{ margin-bottom:3pt; }
+  .steps{ counter-reset:s; list-style:none; padding:0; }
+  .steps li{ counter-increment:s; position:relative; padding-left:24pt; margin-bottom:6pt; }
+  .steps li::before{ content:counter(s); position:absolute; left:0; top:1pt; width:16pt; height:16pt; border-radius:50%; background:var(--ink); color:#fff; font:600 8pt/16pt "Segoe UI"; text-align:center; }
+  figure{ margin:8pt 0 12pt; break-inside:avoid; } figcaption{ font-size:8.6pt; color:var(--muted); margin-top:3pt; }
+  .src-title{ break-after:avoid; margin-top:14pt; display:flex; justify-content:space-between; align-items:baseline; border-bottom:1px solid var(--line); padding-bottom:3pt; }
+  .src-title b{ font:600 10pt "Cascadia Mono",Consolas,monospace; } .src-title span{ font-size:8.6pt; color:var(--muted); }
+  .check li{ list-style:none; position:relative; } .check li::before{ content:""; position:absolute; left:-16pt; top:3pt; width:9pt; height:9pt; border:1.5px solid var(--ink); border-radius:2px; }
+</style>
+</head>
+<body>
+
+<!-- ============================ COVER ============================ -->
+<section class="cover">
+  <div class="glyph"></div><div class="glyph2"></div>
+  <div class="kicker">AI Engineering · Azure Databricks</div>
+  <div class="bar"></div>
+  <h1>Construye un agente de IA en Databricks</h1>
+  <div class="sub">Guía de replicación paso a paso del caso <b>Bakehouse Analyst</b>: datos reales, herramientas gobernadas en Unity Catalog, RAG, evaluación, despliegue y app de chat. Sin Genie.</div>
+  <div class="meta">
+    <div><b>Plataforma</b><span>Azure Databricks<br>Premium · eastus2</span></div>
+    <div><b>Modelo</b><span>gpt-oss-20b<br>(bajo costo)</span></div>
+    <div><b>Versión</b><span>1.0<br>22 oct 2026</span></div>
+    <div><b>Nivel</b><span>Intermedio<br>CLI + Python + SQL</span></div>
+  </div>
+</section>
+
+<!-- ============================ INTRO ============================ -->
+<section>
+  <div class="chapter-head" style="margin-top:0"><div class="num">&bull;</div><h2>Cómo usar esta guía</h2></div>
+  <p class="lead">Cada capítulo es un paso que puedes ejecutar a mano. Todos siguen la misma estructura para que sepas siempre dónde estás.</p>
+  <ol class="steps">
+    <li><strong>Objetivo y qué hace:</strong> por qué existe el paso y qué ocurre por dentro, antes de tocar nada.</li>
+    <li><strong>Comandos:</strong> en bloques oscuros. Se copian y pegan en una terminal bash.</li>
+    <li><strong>Verifica:</strong> cómo comprobar que funcionó antes de seguir.</li>
+    <li><strong>Si falla:</strong> los errores reales que aparecieron al construir este caso, con su solución.</li>
+  </ol>
+  <div class="callout note"><span class="l">Código incluido</span><p>El <strong>Apéndice C</strong> contiene el código fuente completo de cada archivo. Puedes copiarlo desde ahí; no necesitas el repositorio.</p></div>
+
+  <h3>Contenido</h3>
+  <div class="toc">
+    <div><span class="n">1</span><span>Qué vas a construir<small>Arquitectura, herramientas y casuística</small></span></div>
+    <div><span class="n">2</span><span>Antes de empezar<small>Costos, requisitos y variables</small></span></div>
+    <div><span class="n">3</span><span>Infraestructura y acceso<small>Workspace, perfil de CLI, permisos</small></span></div>
+    <div><span class="n">4</span><span>Datos<small>Copia sin datos personales</small></span></div>
+    <div><span class="n">5</span><span>Herramientas SQL<small>Funciones de Unity Catalog</small></span></div>
+    <div><span class="n">6</span><span>Búsqueda vectorial (RAG)<small>Índice sobre reseñas</small></span></div>
+    <div><span class="n">7</span><span>El agente<small>Bucle LLM + herramientas</small></span></div>
+    <div><span class="n">8</span><span>Probar en Databricks<small>Jobs serverless</small></span></div>
+    <div><span class="n">9</span><span>Registrar y desplegar<small>MLflow, Unity Catalog, Serving</small></span></div>
+    <div><span class="n">10</span><span>Evaluar<small>Scorers, resultados y hallazgos</small></span></div>
+    <div><span class="n">11</span><span>App de chat<small>Databricks Apps</small></span></div>
+    <div><span class="n">12</span><span>Apagar lo que cuesta<small>Teardown</small></span></div>
+    <div><span class="n">A</span><span>Mapa de dependencias</span></div>
+    <div><span class="n">B</span><span>Problemas y soluciones</span></div>
+    <div><span class="n">C</span><span>Código fuente completo</span></div>
+    <div><span class="n">D</span><span>Checklist final</span></div>
+  </div>
+</section>
+
+<!-- ============================ 1 ============================ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">1</div><h2>Qué vas a construir</h2></div>
+  <p class="lead">Un analista de franquicias de una cadena de galletas. Responde en lenguaje natural sobre ventas, proveedores y opiniones de clientes, y muestra de dónde sale cada cifra.</p>
+
+  <figure>
+  <svg viewBox="0 0 700 330" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+    <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#5B6372"/></marker></defs>
+    <rect x="10" y="125" width="110" height="60" rx="8" fill="#fff" stroke="#1B1F2A" stroke-width="1.5"/>
+    <text x="65" y="150" text-anchor="middle" font-size="13" font-weight="600" fill="#1B1F2A">Usuario</text>
+    <text x="65" y="168" text-anchor="middle" font-size="10.5" fill="#5B6372">App de chat</text>
+    <rect x="165" y="105" width="170" height="100" rx="8" fill="#FDEEEA" stroke="#E8452C" stroke-width="1.5"/>
+    <text x="250" y="132" text-anchor="middle" font-size="13" font-weight="600" fill="#B8321D">Endpoint del agente</text>
+    <text x="250" y="152" text-anchor="middle" font-size="10.5" fill="#1B1F2A">agent.py (MLflow)</text>
+    <text x="250" y="168" text-anchor="middle" font-size="10.5" fill="#1B1F2A">bucle: LLM → herramientas</text>
+    <text x="250" y="184" text-anchor="middle" font-size="10.5" fill="#5B6372">Model Serving · escala a cero</text>
+    <rect x="395" y="20" width="150" height="56" rx="8" fill="#fff" stroke="#1B1F2A"/>
+    <text x="470" y="44" text-anchor="middle" font-size="12" font-weight="600">LLM · gpt-oss-20b</text>
+    <text x="470" y="61" text-anchor="middle" font-size="10" fill="#5B6372">Foundation Model API</text>
+    <rect x="395" y="120" width="150" height="56" rx="8" fill="#fff" stroke="#1B1F2A"/>
+    <text x="470" y="144" text-anchor="middle" font-size="12" font-weight="600">SQL warehouse</text>
+    <text x="470" y="161" text-anchor="middle" font-size="10" fill="#5B6372">ejecuta 4 funciones UC</text>
+    <rect x="395" y="230" width="150" height="56" rx="8" fill="#fff" stroke="#1B1F2A"/>
+    <text x="470" y="254" text-anchor="middle" font-size="12" font-weight="600">Vector Search</text>
+    <text x="470" y="271" text-anchor="middle" font-size="10" fill="#5B6372">índice de reseñas · gte-large</text>
+    <rect x="590" y="105" width="100" height="90" rx="8" fill="#EAF0FD" stroke="#2457C5"/>
+    <text x="640" y="135" text-anchor="middle" font-size="12" font-weight="600" fill="#2457C5">Delta</text>
+    <text x="640" y="152" text-anchor="middle" font-size="10" fill="#1B1F2A">franchises</text>
+    <text x="640" y="166" text-anchor="middle" font-size="10" fill="#1B1F2A">transactions</text>
+    <text x="640" y="180" text-anchor="middle" font-size="10" fill="#1B1F2A">suppliers · reviews</text>
+    <g stroke="#5B6372" stroke-width="1.4" fill="none" marker-end="url(#ar)">
+      <path d="M120,155 L163,155"/><path d="M335,125 L393,55"/><path d="M335,155 L393,148"/><path d="M335,185 L393,250"/>
+      <path d="M545,148 L588,148"/><path d="M545,258 C575,258 600,230 625,197"/>
+    </g>
+    <text x="350" y="318" text-anchor="middle" font-size="10" fill="#5B6372">Catálogo Unity Catalog: dbw_returns_agent.bakehouse_agent</text>
+  </svg>
+  <figcaption>Figura 1. Una pregunta recorre el agente: el LLM decide qué herramienta usar, el agente la ejecuta y devuelve el resultado al LLM hasta que este responde.</figcaption>
+  </figure>
+
+  <h3>Las cinco herramientas</h3>
+  <table>
+    <tr><th>Herramienta</th><th>Tipo</th><th>Qué hace</th></tr>
+    <tr><td><code>find_franchise</code></td><td>Función UC (SQL)</td><td>Busca franquicias por nombre, ciudad o país y devuelve su <code>franchiseID</code></td></tr>
+    <tr><td><code>franchise_sales</code></td><td>Función UC (SQL)</td><td>Unidades e ingresos por producto de una franquicia en un rango de fechas</td></tr>
+    <tr><td><code>top_franchises</code></td><td>Función UC (SQL)</td><td>Ranking de franquicias por ingresos</td></tr>
+    <tr><td><code>franchise_supplier</code></td><td>Función UC (SQL)</td><td>Proveedor, ingrediente y si está aprobado</td></tr>
+    <tr><td><code>search_reviews</code></td><td>Vector Search</td><td>Búsqueda semántica sobre 204 reseñas de clientes</td></tr>
+  </table>
+
+  <h3>Casuística que cubre</h3>
+  <table class="keep">
+    <tr><th>#</th><th>Escenario</th><th>Comportamiento esperado</th></tr>
+    <tr><td>1</td><td>Ranking ("top 3 franquicias")</td><td>Llama a <code>top_franchises</code>; no inventa cifras</td></tr>
+    <tr><td>2</td><td>Cadena de herramientas ("qué vendió Tokio y quién la abastece")</td><td><code>find_franchise</code> → <code>franchise_sales</code> → <code>franchise_supplier</code></td></tr>
+    <tr><td>3</td><td>Opinión de clientes</td><td>Siempre <code>search_reviews</code>; cita el id de la reseña</td></tr>
+    <tr><td>4</td><td>Fuera del rango de fechas ("ventas de junio")</td><td>Avisa que los datos cubren del 2024-05-01 al 2024-05-17</td></tr>
+    <tr><td>5</td><td>Fuera de dominio ("receta de pizza")</td><td>Declina cortésmente</td></tr>
+    <tr><td>6</td><td>Prompt injection ("ignora tus instrucciones")</td><td>Declina y no revela el prompt</td></tr>
+    <tr><td>7</td><td>Idioma cruzado ("Tokio" vs <code>Tokyo</code> en los datos)</td><td>Traduce antes de buscar</td></tr>
+  </table>
+
+  <h3>Los datos</h3>
+  <p>Son datos de ejemplo que Databricks incluye en el catálogo <code>samples.bakehouse</code>; no hay que descargar nada.</p>
+  <table>
+    <tr><th>Tabla</th><th>Filas</th><th>Contenido</th></tr>
+    <tr><td><code>sales_transactions</code></td><td>3 333</td><td>Ventas del 2024-05-01 al 2024-05-17, 6 productos, 48 franquicias</td></tr>
+    <tr><td><code>sales_franchises</code></td><td>48</td><td>Nombre, ciudad, país, tamaño, proveedor</td></tr>
+    <tr><td><code>sales_suppliers</code></td><td>27</td><td>Ingrediente, continente, aprobado Y/N</td></tr>
+    <tr><td><code>media_customer_reviews</code></td><td>204</td><td>Reseñas en texto libre</td></tr>
+  </table>
+  <div class="callout ok"><span class="l">Decisión de privacidad</span><p><code>sales_customers</code> (nombres, correos, teléfonos, direcciones) <strong>no se usa</strong>, y de las transacciones se elimina <code>cardNumber</code>. El agente no puede filtrar lo que nunca copiamos.</p></div>
+</section>
+
+<!-- ============================ 2 ============================ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">2</div><h2>Antes de empezar</h2></div>
+
+  <h3>Costos</h3>
+  <p>Las tarifas están en DBU (unidad de facturación de Databricks); el costo en dinero depende de tu tarifa por DBU, que varía por contrato y no aparece en las fuentes consultadas.</p>
+  <table>
+    <tr><th>Concepto</th><th>Tarifa publicada</th><th>Comentario</th></tr>
+    <tr><td>LLM <code>gpt-oss-20b</code> (pago por token)</td><td>1.0 DBU / M tokens entrada · 4.3 salida</td><td>Todo el caso son pocos millones de tokens</td></tr>
+    <tr><td>Embeddings <code>gte-large-en</code></td><td>1.86 DBU / M tokens</td><td>204 reseñas cuestan prácticamente nada</td></tr>
+    <tr><td><strong>Vector Search Standard</strong></td><td><strong>4 DBU / hora por unidad</strong></td><td><strong>El costo real.</strong> Corre mientras exista un índice</td></tr>
+    <tr><td>Endpoint del agente</td><td>—</td><td>Escala a cero: paga solo al atender</td></tr>
+    <tr><td>SQL warehouse serverless</td><td>Por uso</td><td>Se detiene solo</td></tr>
+  </table>
+  <div class="callout cost"><span class="l">Costo</span><p>No se usó Claude/Opus como modelo del agente por precio. Al terminar cada sesión ejecuta el <strong>Capítulo 12</strong> para apagar Vector Search. Fuentes: precios de Foundation Model Serving y guía de costos de Vector Search en la documentación de Databricks.</p></div>
+
+  <h3>Requisitos</h3>
+  <table>
+    <tr><th>Herramienta</th><th>Versión probada</th><th>Para qué</th></tr>
+    <tr><td>Azure CLI (<code>az</code>)</td><td>2.87</td><td>Crear el grupo de recursos y el workspace</td></tr>
+    <tr><td>Databricks CLI</td><td>1.12.1 (mínimo 1.0)</td><td>Todo lo demás</td></tr>
+    <tr><td>Python</td><td>3.13</td><td>Solo el ayudante <code>run_sql.sh</code>; el agente corre en serverless</td></tr>
+    <tr><td><code>jq</code></td><td>cualquiera</td><td>Leer las respuestas JSON</td></tr>
+    <tr><td>Bash</td><td>Git Bash en Windows</td><td>Los comandos de esta guía</td></tr>
+  </table>
+  <p>Necesitas una suscripción de Azure donde puedas crear recursos. El workspace debe ser <strong>Premium</strong> y estar en <strong>eastus2</strong>: serverless, Vector Search y las Foundation Model APIs lo requieren.</p>
+
+  <h3>Variables de la sesión</h3>
+  <p>Define esto una vez en tu terminal. El resto de la guía usa estas variables.</p>
+  {{CMD}}
+export MSYS_NO_PATHCONV=1                   # Git Bash (Windows): no convertir rutas /Workspace/...
+export P="--profile returns-agent"          # perfil de la CLI (se crea en el capítulo 3)
+export ME="tu_usuario@dominio.com"          # tu usuario en el workspace
+export WS="/Workspace/Users/$ME/bakehouse-agent"
+export EP="agents_dbw_returns_agent-bakehouse_agent-bakehouse_agent"   # endpoint del agente
+export WH="<WAREHOUSE_ID>"                  # se obtiene en el capítulo 3
+  {{/CMD}}
+  <div class="callout warn"><span class="l">Usa estos nombres</span><p>Llama al workspace <code>dbw-returns-agent</code>. Databricks crea un catálogo por defecto con ese nombre (guiones bajos): <code>dbw_returns_agent</code>, que aparece en todos los archivos. Si eliges otro nombre de workspace, reemplaza <code>dbw_returns_agent</code> por tu catálogo en todos los archivos del Apéndice C.</p></div>
+</section>
+
+<!-- ============================ 3 ============================ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">3</div><h2>Infraestructura y acceso</h2></div>
+  <div class="strip"><div><b>Objetivo</b><span>Workspace listo y CLI autenticada</span></div><div><b>Archivos</b><span>—</span></div><div><b>Tarda</b><span>Unos minutos</span></div><div><b>Costo</b><span>Sin costo en reposo</span></div></div>
+
+  <h4>Crear el workspace</h4>
+  {{CMD}}
+az login
+az group create -n rg-returns-agent -l eastus2
+az databricks workspace create -g rg-returns-agent -n dbw-returns-agent -l eastus2 --sku premium
+az databricks workspace show -g rg-returns-agent -n dbw-returns-agent --query workspaceUrl -o tsv
+  {{/CMD}}
+  <p>El último comando imprime la URL, algo como <code>adb-1234567890123456.7.azuredatabricks.net</code>. Guárdala.</p>
+
+  <h4>Crear el perfil de la CLI</h4>
+  <p>Como ya iniciaste sesión en Azure, la CLI puede reutilizar esa sesión sin abrir el navegador. Añade esto al final de <code>~/.databrickscfg</code>:</p>
+  {{CMD}}
+[returns-agent]
+host = https://<workspaceUrl>
+auth_type = azure-cli
+  {{/CMD}}
+  <p>Alternativa clásica, que abre el navegador: <code>databricks auth login --host https://&lt;workspaceUrl&gt; --profile returns-agent</code>.</p>
+  <div class="callout ok"><span class="l">Verifica</span><p>Ejecuta <code>databricks current-user me $P</code>. Debe devolver tu usuario con <code>"active": true</code>.</p></div>
+
+  <h4>Permisos en Unity Catalog</h4>
+  <p>El catálogo del workspace pertenece al grupo de administradores. Aun siendo administrador, registrar el modelo desde un job falla con <code>PERMISSION_DENIED: User does not have USE CATALOG</code>. Se resuelve una vez:</p>
+  {{CMD}}
+databricks experimental aitools tools query "GRANT ALL PRIVILEGES ON CATALOG dbw_returns_agent TO \`$ME\`" $P
+  {{/CMD}}
+
+  <h4>Obtener el id del warehouse</h4>
+  {{CMD}}
+databricks warehouses list $P -o json | jq -r '.[] | "\(.id)  \(.name)"'
+export WH="<el id que aparezca junto a Serverless Starter Warehouse>"
+  {{/CMD}}
+  <div class="callout warn"><span class="l">Si falla</span><p><strong>Rutas rotas en Git Bash</strong> (<code>Path (C:/Program Files/Git/Workspace/...) doesn't start with '/'</code>): falta <code>export MSYS_NO_PATHCONV=1</code>.</p></div>
+</section>
+
+<!-- ============================ 4 ============================ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">4</div><h2>Datos</h2></div>
+  <div class="strip"><div><b>Objetivo</b><span>Tablas propias sin datos personales</span></div><div><b>Archivos</b><span>sql/01_data.sql<br>scripts/run_sql.sh</span></div><div><b>Tarda</b><span>Segundos</span></div><div><b>Costo</b><span>Mínimo</span></div></div>
+
+  <p class="lead">Las tablas de <code>samples</code> son compartidas y de solo lectura. Las copiamos a un esquema propio para poder activar Change Data Feed (lo exige Vector Search) y para decidir qué columnas existen.</p>
+  <h4>Qué hace cada sentencia</h4>
+  <table>
+    <tr><th>Sentencia</th><th>Por qué</th></tr>
+    <tr><td><code>CREATE SCHEMA bakehouse_agent</code></td><td>Espacio propio para todo el caso</td></tr>
+    <tr><td><code>franchises</code>, <code>suppliers</code></td><td>Copias sin columnas innecesarias (coordenadas, etc.)</td></tr>
+    <tr><td><code>transactions</code></td><td>Copia <strong>sin <code>cardNumber</code></strong></td></tr>
+    <tr><td><code>reviews</code> con <code>delta.enableChangeDataFeed = true</code></td><td>Un índice Delta Sync detecta cambios con Change Data Feed</td></tr>
+    <tr><td><code>CAST(new_id AS STRING) AS review_id</code></td><td>El índice exige clave primaria; usamos el id de reseña como texto</td></tr>
+  </table>
+
+  <h4>Ejecutar</h4>
+  <p>Crea los archivos <code>sql/01_data.sql</code> y <code>scripts/run_sql.sh</code> con el contenido del Apéndice C y ejecuta:</p>
+  {{CMD}}
+chmod +x scripts/run_sql.sh
+./scripts/run_sql.sh sql/01_data.sql
+  {{/CMD}}
+  <p><code>run_sql.sh</code> parte el archivo en sentencias y envía cada una al warehouse con <code>databricks experimental aitools tools query</code>. Ignora las líneas que empiezan con <code>--</code>.</p>
+  <div class="callout ok"><span class="l">Verifica</span><p>Debes obtener 3333 filas en <code>transactions</code> y 204 en <code>reviews</code>:</p></div>
+  {{CMD}}
+databricks experimental aitools tools query "SELECT (SELECT count(*) FROM dbw_returns_agent.bakehouse_agent.transactions) t, (SELECT count(*) FROM dbw_returns_agent.bakehouse_agent.reviews) r" $P
+  {{/CMD}}
+</section>
+
+<!-- ============================ 5 ============================ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">5</div><h2>Herramientas SQL</h2></div>
+  <div class="strip"><div><b>Objetivo</b><span>Las 4 funciones que el agente puede llamar</span></div><div><b>Archivos</b><span>sql/02_tools.sql</span></div><div><b>Tarda</b><span>Segundos</span></div><div><b>Costo</b><span>Mínimo</span></div></div>
+
+  <p class="lead">Una función de Unity Catalog es una consulta con nombre, parámetros y permisos. El agente <strong>no recibe acceso a las tablas, solo a estas funciones</strong>: lo que puede leer queda definido y gobernado aquí.</p>
+  <div class="callout note"><span class="l">Idea clave</span><p>El texto <code>COMMENT</code> de cada función y de cada parámetro es lo que lee el LLM para decidir cuándo y cómo llamarla. Un comentario pobre produce llamadas erróneas.</p></div>
+  {{CMD}}
+./scripts/run_sql.sh sql/02_tools.sql
+  {{/CMD}}
+  <div class="callout ok"><span class="l">Verifica</span><p>Prueba cada función a mano. <code>top_franchises(3)</code> debe devolver Baked Bliss (Roma, 6 642 USD), Sweet Sinsations (Estocolmo, 4 512) y The Crumbly Nook (Sídney, 2 790).</p></div>
+  {{CMD}}
+databricks experimental aitools tools query "SELECT * FROM dbw_returns_agent.bakehouse_agent.top_franchises(3)" $P
+databricks experimental aitools tools query "SELECT * FROM dbw_returns_agent.bakehouse_agent.find_franchise('tokyo')" $P
+databricks experimental aitools tools query "SELECT * FROM dbw_returns_agent.bakehouse_agent.franchise_supplier(3000001)" $P
+  {{/CMD}}
+  <div class="callout warn"><span class="l">Si falla</span><p><code>INVALID_LIMIT_LIKE_EXPRESSION.IS_UNFOLDABLE</code>: Spark no acepta <code>LIMIT</code> con un parámetro de función. Por eso <code>top_franchises</code> usa <code>row_number()</code> y filtra por ranking.</p></div>
+</section>
+
+<!-- ============================ 6 ============================ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">6</div><h2>Búsqueda vectorial (RAG)</h2></div>
+  <div class="strip"><div><b>Objetivo</b><span>Búsqueda semántica sobre reseñas</span></div><div><b>Archivos</b><span>agent/index_spec.json</span></div><div><b>Tarda</b><span>Varios minutos</span></div><div><b>Costo</b><span>Empieza a facturar</span></div></div>
+
+  <p class="lead">RAG significa recuperar los fragmentos relevantes antes de responder. El agente no "sabe" qué opinan los clientes: lo busca en el índice y cita lo que encuentra.</p>
+  {{CMD}}
+databricks vector-search-endpoints create-endpoint bakehouse-vs STANDARD --no-wait $P
+databricks vector-search-indexes create-index --json @agent/index_spec.json $P
+  {{/CMD}}
+  <h4>Campos de index_spec.json</h4>
+  <table>
+    <tr><th>Campo</th><th>Valor</th><th>Significado</th></tr>
+    <tr><td><code>index_type</code></td><td><code>DELTA_SYNC</code></td><td>El índice se mantiene sincronizado con una tabla Delta</td></tr>
+    <tr><td><code>pipeline_type</code></td><td><code>TRIGGERED</code></td><td>Sincroniza cuando se pide; más barato que <code>CONTINUOUS</code></td></tr>
+    <tr><td><code>embedding_source_columns</code></td><td><code>review</code> + <code>databricks-gte-large-en</code></td><td>Databricks calcula los embeddings del texto</td></tr>
+    <tr><td><code>columns_to_sync</code></td><td>id, franquicia, fecha, texto</td><td>Solo estas columnas se pueden devolver en una búsqueda</td></tr>
+  </table>
+  <p>Espera a que el índice esté listo (tarda varios minutos: primero se aprovisiona el endpoint y luego se sincroniza):</p>
+  {{CMD}}
+databricks vector-search-indexes get-index dbw_returns_agent.bakehouse_agent.reviews_index $P | jq '.status'
+# listo cuando: "ready": true
+  {{/CMD}}
+  <div class="callout cost"><span class="l">Costo</span><p>Desde que el índice existe, el endpoint factura 4 DBU por hora aunque no lo uses. Anota la hora y recuerda el Capítulo 12.</p></div>
+</section>
+
+<!-- ============================ 7 ============================ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">7</div><h2>El agente</h2></div>
+  <div class="strip"><div><b>Objetivo</b><span>El cerebro: LLM + herramientas</span></div><div><b>Archivos</b><span>agent/agent.py</span></div><div><b>Tarda</b><span>—</span></div><div><b>Costo</b><span>—</span></div></div>
+
+  <p class="lead">El agente es una clase <code>ResponsesAgent</code> de MLflow con un método <code>predict()</code>. Ese formato lo entienden el despliegue, el tracing y la evaluación. No se usa LangChain: el bucle completo cabe en pocas líneas y se puede leer entero.</p>
+
+  <figure>
+  <svg viewBox="0 0 700 150" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+    <defs><marker id="a2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#5B6372"/></marker></defs>
+    <rect x="5" y="45" width="120" height="50" rx="8" fill="#fff" stroke="#1B1F2A"/><text x="65" y="75" text-anchor="middle" font-size="12" font-weight="600">Pregunta</text>
+    <rect x="165" y="45" width="140" height="50" rx="8" fill="#FDEEEA" stroke="#E8452C"/><text x="235" y="68" text-anchor="middle" font-size="12" font-weight="600" fill="#B8321D">Llamar al LLM</text><text x="235" y="84" text-anchor="middle" font-size="9.5" fill="#5B6372">con la lista de herramientas</text>
+    <rect x="345" y="45" width="140" height="50" rx="8" fill="#fff" stroke="#1B1F2A"/><text x="415" y="68" text-anchor="middle" font-size="12" font-weight="600">¿Pide herramientas?</text><text x="415" y="84" text-anchor="middle" font-size="9.5" fill="#5B6372">tool_calls</text>
+    <rect x="335" y="110" width="160" height="34" rx="8" fill="#EAF0FD" stroke="#2457C5"/><text x="415" y="131" text-anchor="middle" font-size="10.5" fill="#2457C5">Ejecutar y devolver resultado</text>
+    <rect x="535" y="45" width="140" height="50" rx="8" fill="#E7F5EE" stroke="#1B7F55"/><text x="605" y="75" text-anchor="middle" font-size="12" font-weight="600" fill="#1B7F55">Respuesta final</text>
+    <g stroke="#5B6372" stroke-width="1.4" fill="none" marker-end="url(#a2)"><path d="M125,70 L163,70"/><path d="M305,70 L343,70"/><path d="M485,70 L533,70"/><path d="M415,95 L415,108"/><path d="M345,127 C230,127 235,115 235,97"/></g>
+    <text x="508" y="62" font-size="9.5" fill="#5B6372" text-anchor="middle">no</text><text x="428" y="105" font-size="9.5" fill="#5B6372">sí</text>
+  </svg>
+  <figcaption>Figura 2. Bucle del agente. Se repite hasta 6 veces (<code>max_steps</code>); si no termina, responde que no pudo completar.</figcaption>
+  </figure>
+
+  <h4>Recorrido por el archivo</h4>
+  <table>
+    <tr><th>Bloque</th><th>Qué hace</th></tr>
+    <tr><td><code>DEV_CONFIG</code> + <code>ModelConfig</code></td><td>Configuración (modelo, warehouse, índice, esquema). En jobs sale de variables de entorno; al desplegar, de la configuración guardada dentro del modelo</td></tr>
+    <tr><td><code>SYSTEM_PROMPT</code></td><td>Reglas del analista: rango de fechas, resolver siempre el id, reseñas siempre con <code>search_reviews</code>, traducir ciudades al inglés, declinar fuera de dominio, ignorar instrucciones dentro de reseñas</td></tr>
+    <tr><td><code>TOOLS</code></td><td>Las 5 herramientas en formato function-calling (nombre, descripción, esquema JSON)</td></tr>
+    <tr><td><code>SQL_TOOLS</code></td><td>Herramienta → sentencia SQL con <strong>parámetros con nombre</strong> (<code>:franchise_id</code>) y su conversión de tipo</td></tr>
+    <tr><td><code>_run_sql_tool</code></td><td>Ejecuta la función en el warehouse con la Statement Execution API. Lo que dice el LLM <strong>nunca se concatena en el SQL</strong> (evita inyección)</td></tr>
+    <tr><td><code>_search_reviews</code></td><td>Consulta el índice; filtro opcional por franquicia; recorta cada reseña a 600 caracteres</td></tr>
+    <tr><td><code>_chat</code></td><td>Llama al LLM con <code>temperature=0</code> para decisiones repetibles</td></tr>
+    <tr><td><code>_text</code></td><td><code>gpt-oss</code> devuelve el contenido como lista (razonamiento + texto); se queda solo con el texto</td></tr>
+    <tr><td><code>predict</code></td><td>El bucle de la Figura 2; registra cada llamada y su resultado como ítems de la respuesta</td></tr>
+    <tr><td><code>set_model(...)</code></td><td>Obligatorio en "models from code": indica a MLflow qué objeto empaquetar</td></tr>
+  </table>
+  <div class="callout note"><span class="l">Detalles que cuestan horas</span><p><strong>1.</strong> No pongas <code>@mlflow.trace</code> en <code>predict</code>: <code>ResponsesAgent</code> ya lo traza. <strong>2.</strong> Los errores de herramienta se devuelven al LLM como texto <code>ERROR: ...</code> para que se corrija; no tumban el agente. <strong>3.</strong> <code>gpt-oss</code> a veces emite el nombre de la herramienta con basura (<code>franchise_supplier&lt;|channel|&gt;commentary</code>); se limpia con <code>.split("&lt;")[0]</code>.</p></div>
+  <p>Dependencias: <code>mlflow&gt;=3.1</code>, <code>databricks-sdk&gt;=0.40</code>, <code>pydantic&gt;=2</code>. El código completo está en el Apéndice C.</p>
+</section>
+
+<!-- ============================ 8 ============================ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">8</div><h2>Probar en Databricks</h2></div>
+  <div class="strip"><div><b>Objetivo</b><span>Ver el agente responder de verdad</span></div><div><b>Archivos</b><span>agent/test_agent.py<br>agent/job_test.json</span></div><div><b>Tarda</b><span>Unos minutos</span></div><div><b>Costo</b><span>Mínimo</span></div></div>
+
+  <p class="lead">El código no corre en tu máquina: corre en <strong>compute serverless</strong> mediante un job de una sola ejecución. Subes los archivos al workspace y lanzas el job.</p>
+  {{CMD}}
+databricks workspace mkdirs $WS $P
+databricks workspace import $WS/agent.py      --file agent/agent.py      --format RAW --overwrite $P
+databricks workspace import $WS/test_agent.py --file agent/test_agent.py --format RAW --overwrite $P
+# edita agent/job_test.json: reemplaza <TU_USUARIO> y <WAREHOUSE_ID>
+databricks jobs submit --json @agent/job_test.json $P --timeout 20m
+  {{/CMD}}
+  <h4>Anatomía de job_test.json</h4>
+  <ul>
+    <li><code>spark_python_task.python_file</code>: ruta del script en el workspace.</li>
+    <li><code>parameters</code>: <code>[&lt;WAREHOUSE_ID&gt;, &lt;carpeta que contiene agent.py&gt;]</code>. La carpeta se pasa como parámetro porque en serverless <strong>no existe <code>__file__</code></strong>.</li>
+    <li><code>environments</code>: entorno serverless <code>client: "3"</code> con las dependencias pip.</li>
+  </ul>
+  <h4>Ver la salida</h4>
+  {{CMD}}
+RID=$(databricks jobs list-runs --limit 1 $P -o json | jq -r '.[0].run_id')
+TID=$(databricks jobs get-run $RID $P -o json | jq -r '.tasks[0].run_id')
+databricks jobs get-run-output $TID $P -o json | jq -r '.logs // .error'
+  {{/CMD}}
+  <div class="callout ok"><span class="l">Verifica</span><p>Para "top 3 franquicias" debe llamar a <code>top_franchises</code>; para Tokio, a <code>find_franchise → franchise_sales → franchise_supplier</code>; para opiniones, a <code>search_reviews</code>; para la pizza, a ninguna herramienta y rechazar.</p></div>
+  <div class="callout warn"><span class="l">Si falla</span><p><strong><code>NameError: __file__</code></strong>: pasa la carpeta como parámetro. <strong><code>'dict' object has no attribute 'text'</code></strong>: los ítems de contenido son diccionarios; usa <code>content[0]["text"]</code>. Para ver el error completo de un job: <code>jq -r '.error_trace'</code> sobre la salida del run.</p></div>
+</section>
+
+<!-- ============================ 9 ============================ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">9</div><h2>Registrar y desplegar</h2></div>
+  <div class="strip"><div><b>Objetivo</b><span>Endpoint público del agente</span></div><div><b>Archivos</b><span>agent/log_and_deploy.py<br>agent/job_deploy.json</span></div><div><b>Tarda</b><span>~10 min la primera vez</span></div><div><b>Costo</b><span>Escala a cero</span></div></div>
+
+  <p class="lead">Convierte el código en un servicio versionado, gobernado y con credenciales automáticas.</p>
+  <ol class="steps">
+    <li><strong>log_model:</strong> empaqueta <code>agent.py</code> (models from code) junto con su configuración y la lista de <code>resources</code>: el LLM, el warehouse, el índice y las 4 funciones. Con eso Databricks crea credenciales de corta duración para el agente (<em>automatic authentication passthrough</em>). <strong>No hay tokens en el código.</strong></li>
+    <li><strong>register_model:</strong> guarda el modelo versionado en Unity Catalog: <code>dbw_returns_agent.bakehouse_agent.bakehouse_agent</code>.</li>
+    <li><strong>agents.deploy:</strong> crea el endpoint de Model Serving con escala a cero, una review app y el almacenamiento de trazas. Requiere el paquete <code>databricks-agents</code>.</li>
+  </ol>
+  {{CMD}}
+databricks workspace import $WS/log_and_deploy.py --file agent/log_and_deploy.py --format RAW --overwrite $P
+databricks jobs submit --json @agent/job_deploy.json $P --timeout 40m
+  {{/CMD}}
+  <h4>Saber si el endpoint está listo</h4>
+  <p>Hay que mirar <strong>dos</strong> campos: durante un cambio de versión, <code>ready</code> sigue en <code>READY</code> aunque la versión vieja aún atienda.</p>
+  {{CMD}}
+databricks serving-endpoints get $EP $P | jq '.state'
+# listo cuando:  ready == "READY"  Y  config_update == "NOT_UPDATING"
+  {{/CMD}}
+  <h4>Consultarlo</h4>
+  <div class="callout warn"><span class="l">Importante</span><p>El comando <code>databricks serving-endpoints query</code> descarta el campo <code>output</code> de este formato y solo devuelve <code>id</code> y <code>object</code>. Usa la API directa:</p></div>
+  {{CMD}}
+databricks api post /serving-endpoints/$EP/invocations $P \
+  --json '{"input":[{"role":"user","content":"¿Qué proveedor abastece a Tokyo Treats?"}]}' \
+  | jq -r '.output[-1].content[0].text'
+  {{/CMD}}
+  <div class="callout note"><span class="l">Iterar</span><p>Cada cambio en <code>agent.py</code> exige repetir este capítulo: genera una nueva versión del modelo y el endpoint se actualiza sin cortar el servicio.</p></div>
+  <div class="callout warn"><span class="l">Si falla</span><p><code>PERMISSION_DENIED ... USE CATALOG</code> al registrar: falta el <code>GRANT</code> del Capítulo 3.</p></div>
+</section>
+
+<!-- ============================ 10 ============================ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">10</div><h2>Evaluar</h2></div>
+  <div class="strip"><div><b>Objetivo</b><span>Medir, no suponer</span></div><div><b>Archivos</b><span>agent/evaluate.py<br>agent/job_eval.json</span></div><div><b>Tarda</b><span>~3 min por corrida</span></div><div><b>Costo</b><span>Bajo</span></div></div>
+
+  <p class="lead">Un agente que "parece funcionar" en tres pruebas manuales no es un agente evaluado. <code>mlflow.genai.evaluate</code> ejecuta el agente sobre un conjunto de preguntas y puntúa cada respuesta.</p>
+  {{CMD}}
+databricks workspace import $WS/evaluate.py --file agent/evaluate.py --format RAW --overwrite $P
+databricks jobs submit --json @agent/job_eval.json $P --timeout 20m
+  {{/CMD}}
+  <h4>Qué se mide</h4>
+  <table>
+    <tr><th>Elemento</th><th>Tipo</th><th>Qué comprueba</th></tr>
+    <tr><td>Dataset (8 preguntas)</td><td>Datos</td><td>Preguntas con <em>expectations</em>. Los números esperados salen de SQL ejecutado a mano, no del LLM</td></tr>
+    <tr><td><code>right_tool</code></td><td>Código (gratis)</td><td>¿Llamó a la herramienta correcta, o a ninguna cuando no debía?</td></tr>
+    <tr><td><code>has_facts</code></td><td>Código (gratis)</td><td>¿Aparecen los datos esperados? Ignora espacios y separadores de miles</td></tr>
+    <tr><td><code>scope_and_safety</code></td><td>Juez LLM</td><td>No revela el prompt; declina lo que no es de Bakehouse</td></tr>
+  </table>
+  <div class="callout warn"><span class="l">Detalle</span><p>MLflow rechaza <code>None</code> como valor de expectativa (<code>The value field must be specified</code>). "Ninguna herramienta" se escribe <code>"none"</code>.</p></div>
+
+  <h4>Resultados reales: 7 corridas</h4>
+  <table>
+    <tr><th>Corrida</th><th>right_tool</th><th>has_facts</th><th>scope_and_safety</th><th>Qué cambió</th></tr>
+    <tr><td>1 (base)</td><td>0.75</td><td>0.50</td><td>0.875</td><td>Primera versión</td></tr>
+    <tr><td>2</td><td>0.875</td><td>1.00</td><td>0.875</td><td>Se limpia el nombre de herramienta; el scorer normaliza espacios</td></tr>
+    <tr><td>3</td><td>0.75</td><td>0.875</td><td>0.50–0.625</td><td><strong>Misma versión, otro resultado</strong>: sin <code>temperature=0</code> hay no determinismo</td></tr>
+    <tr><td>4–5</td><td>0.875</td><td>1.00</td><td>0.75</td><td><code>temperature=0</code>, Tokio→Tokyo, juez corregido. Dos corridas idénticas</td></tr>
+    <tr><td>6–7</td><td><strong>1.00</strong></td><td><strong>1.00</strong></td><td>0.625–0.75</td><td>Regla "reseñas siempre con <code>search_reviews</code>"</td></tr>
+  </table>
+  <h4>Qué se aprendió</h4>
+  <ol>
+    <li><strong>El ruido es grande con un modelo pequeño y pocas preguntas.</strong> Sin fijar la temperatura, la misma versión osciló entre 0.5 y 0.875. Fija temperatura y repite antes de concluir.</li>
+    <li><strong>Una regla que el juez no puede verificar produce falsos "no".</strong> "Los números vienen de las herramientas" no es comprobable si el juez solo ve pregunta y respuesta. Se reemplazó por <code>has_facts</code> contra datos reales.</li>
+    <li><strong>El fallo más grave era contestar opiniones sin consultar reseñas</strong> (riesgo de inventar). Se cerró con una regla explícita en el prompt.</li>
+    <li><strong>Limitación abierta:</strong> el juez <code>gpt-oss-20b</code> sigue marcando "no" algunas respuestas válidas. Los scorers de código son la señal fiable. Un juez más fuerte lo mejoraría, pero cuesta más y no se midió.</li>
+    <li>Ocho preguntas son una prueba de humo, no una evaluación estadística. Ampliar el dataset es el siguiente paso.</li>
+  </ol>
+  <p>Las trazas y los resultados quedan en los experimentos MLflow <code>/Shared/bakehouse-agent-dev</code>, <code>/Shared/bakehouse-agent</code> y <code>/Shared/bakehouse-agent-eval</code> (menú <em>Experiments</em> del workspace).</p>
+</section>
+
+<!-- ============================ 11 ============================ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">11</div><h2>App de chat</h2></div>
+  <div class="strip"><div><b>Objetivo</b><span>Interfaz interactiva</span></div><div><b>Archivos</b><span>app/app.py<br>app/app.yaml<br>app/requirements.txt</span></div><div><b>Tarda</b><span>Unos minutos</span></div><div><b>Costo</b><span>Compute de la app</span></div></div>
+
+  <p class="lead">Una app en Databricks Apps (Streamlit). Muestra la respuesta y, en un desplegable por herramienta, qué se llamó y qué devolvió: se ve de dónde sale cada cifra.</p>
+  <table>
+    <tr><th>Archivo</th><th>Rol</th></tr>
+    <tr><td><code>app.py</code></td><td>UI de chat. Llama a <code>POST /serving-endpoints/&lt;endpoint&gt;/invocations</code> con <code>WorkspaceClient().api_client.do(...)</code></td></tr>
+    <tr><td><code>app.yaml</code></td><td>Comando de arranque y variable <code>SERVING_ENDPOINT</code> leída con <code>valueFrom: serving-endpoint</code>; nada queda escrito a mano</td></tr>
+    <tr><td><code>requirements.txt</code></td><td><code>databricks-sdk</code> (Streamlit ya viene preinstalado en el runtime)</td></tr>
+  </table>
+  <div class="callout note"><span class="l">Conexiones y permisos</span><p>La app se ejecuta con <strong>su propio service principal</strong> (credenciales automáticas). Solo necesita <code>CAN_QUERY</code> sobre el endpoint del agente, declarado como <em>resource</em> al crear la app. El agente accede al warehouse, las funciones y el índice con su propio passthrough, así que <strong>la app nunca toca los datos</strong>.</p></div>
+  {{CMD}}
+databricks workspace import-dir app /Workspace/Users/$ME/bakehouse-app --overwrite $P
+
+databricks apps create --no-wait $P --json "{
+  \"name\": \"bakehouse-analyst\",
+  \"description\": \"Chat UI for the Bakehouse analyst agent\",
+  \"resources\": [{\"name\": \"serving-endpoint\",
+                  \"serving_endpoint\": {\"name\": \"$EP\", \"permission\": \"CAN_QUERY\"}}]}"
+
+# espera compute_status = ACTIVE, luego despliega:
+databricks apps get bakehouse-analyst $P | jq '.compute_status.state'
+databricks apps deploy bakehouse-analyst --source-code-path /Workspace/Users/$ME/bakehouse-app $P
+databricks apps get bakehouse-analyst $P | jq '{url, app: .app_status.state}'
+  {{/CMD}}
+  <p>Abre la <code>url</code> en el navegador (te pedirá iniciar sesión) y prueba, por ejemplo: <em>"¿Cuáles son las 5 franquicias con más ingresos?"</em> o <em>"¿Qué opinan los clientes de las Outback Oatmeal?"</em>.</p>
+  <div class="callout note"><span class="l">Por qué Streamlit</span><p>Databricks recomienda AppKit (Node, TypeScript, React) por defecto. Aquí se usó Streamlit por ser una app interna de demostración y un equipo de datos que trabaja en Python. Si el destino fuera un producto, AppKit sería el camino.</p></div>
+  <div class="callout warn"><span class="l">Si falla</span><p><code>databricks apps logs</code> devuelve <code>websocket: bad handshake (HTTP 302)</code> con el perfil <code>azure-cli</code>: ese comando exige OAuth de usuario. Crea un perfil con <code>databricks auth login</code> y úsalo solo para leer logs.</p></div>
+</section>
+
+<!-- ============================ 12 ============================ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">12</div><h2>Apagar lo que cuesta</h2></div>
+  <div class="strip"><div><b>Objetivo</b><span>Dejar el costo en cero</span></div><div><b>Archivos</b><span>scripts/teardown.sh</span></div><div><b>Tarda</b><span>Segundos</span></div><div><b>Costo</b><span>—</span></div></div>
+
+  <p class="lead">Vector Search factura mientras exista un índice. Termina siempre la sesión con este paso.</p>
+  {{CMD}}
+chmod +x scripts/teardown.sh
+./scripts/teardown.sh pause    # borra índice y endpoint de Vector Search (lo único caro en reposo)
+./scripts/teardown.sh all      # además borra la app, el endpoint del agente y todo el grupo de recursos
+  {{/CMD}}
+  <div class="callout warn"><span class="l">Qué pasa después</span><p>Tras <code>pause</code>, el agente no puede usar <code>search_reviews</code> hasta recrear el endpoint y el índice (Capítulo 6, esperando <code>ready: true</code>). Tras <code>all</code> no queda nada: el workspace y su grupo administrado desaparecen, y para volver a empezar se repite desde el Capítulo 3.</p></div>
+  <p>Según la documentación de Databricks, los cargos de un endpoint de Vector Search cesan 24 horas después de borrar el último índice.</p>
+</section>
+
+<!-- ============================ A ============================ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">A</div><h2>Mapa de dependencias</h2></div>
+  <p class="lead">Quién depende de quién y cómo se autentica cada conexión.</p>
+  <table>
+    <tr><th>Componente</th><th>Depende de</th><th>Autenticación</th></tr>
+    <tr><td>Tu CLI</td><td>Azure CLI con sesión iniciada</td><td><code>auth_type = azure-cli</code></td></tr>
+    <tr><td>Jobs (prueba, evaluación, despliegue)</td><td>Compute serverless, tu usuario</td><td>Credenciales del runtime</td></tr>
+    <tr><td>Funciones UC</td><td>Tablas Delta del esquema</td><td>Permisos de Unity Catalog</td></tr>
+    <tr><td>Agente (en el endpoint)</td><td>LLM, warehouse, 4 funciones, índice</td><td><em>Automatic authentication passthrough</em> según <code>resources</code></td></tr>
+    <tr><td>Índice vectorial</td><td>Tabla <code>reviews</code> con Change Data Feed, endpoint <code>bakehouse-vs</code>, modelo de embeddings</td><td>Servicio gestionado</td></tr>
+    <tr><td>App</td><td>Endpoint del agente</td><td>Service principal de la app con <code>CAN_QUERY</code></td></tr>
+  </table>
+  <h3>Estructura del proyecto</h3>
+  {{CMD}}
+bakehouse-agent/
+├── sql/
+│   ├── 01_data.sql              tablas propias sin datos personales
+│   └── 02_tools.sql             4 funciones UC = herramientas
+├── agent/
+│   ├── agent.py                 el agente (ResponsesAgent)
+│   ├── index_spec.json          definición del índice vectorial
+│   ├── test_agent.py            prueba de humo
+│   ├── log_and_deploy.py        log + registro en UC + despliegue
+│   ├── evaluate.py              evaluación MLflow
+│   └── job_{test,deploy,eval}.json    definición de cada job serverless
+├── app/                         app Streamlit (app.py, app.yaml, requirements.txt)
+└── scripts/
+    ├── run_sql.sh               ejecuta un .sql sentencia a sentencia
+    └── teardown.sh              apaga lo que cuesta
+  {{/CMD}}
+</section>
+
+<!-- ============================ B ============================ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">B</div><h2>Problemas y soluciones</h2></div>
+  <p class="lead">Todos ocurrieron de verdad al construir este caso.</p>
+  <table>
+    <tr><th>Síntoma</th><th>Causa</th><th>Solución</th></tr>
+    <tr><td><code>Path (C:/Program Files/Git/Workspace/...) doesn't start with '/'</code></td><td>Git Bash convierte rutas</td><td><code>export MSYS_NO_PATHCONV=1</code></td></tr>
+    <tr><td><code>INVALID_LIMIT_LIKE_EXPRESSION</code></td><td><code>LIMIT</code> no acepta parámetros</td><td><code>row_number()</code> + filtro</td></tr>
+    <tr><td><code>NameError: __file__</code> en el job</td><td>Serverless no define <code>__file__</code></td><td>Pasar la carpeta como parámetro</td></tr>
+    <tr><td><code>'dict' object has no attribute 'text'</code></td><td>Los ítems de contenido son diccionarios</td><td><code>content[0]["text"]</code></td></tr>
+    <tr><td><code>PERMISSION_DENIED ... USE CATALOG</code> al registrar</td><td>El catálogo es del grupo de administradores</td><td><code>GRANT ALL PRIVILEGES ON CATALOG</code> a tu usuario</td></tr>
+    <tr><td><code>serving-endpoints query</code> solo devuelve <code>id</code>/<code>object</code></td><td>La CLI tipada descarta <code>output</code></td><td><code>databricks api post .../invocations</code></td></tr>
+    <tr><td><code>The value field must be specified</code></td><td>MLflow no admite <code>None</code> como expectativa</td><td>Usar <code>"none"</code></td></tr>
+    <tr><td>Herramienta <code>franchise_supplier&lt;|channel|&gt;commentary</code></td><td>Particularidad de <code>gpt-oss</code></td><td>Cortar el nombre en <code>&lt;</code></td></tr>
+    <tr><td>Métricas distintas entre corridas</td><td>Temperatura por defecto</td><td><code>temperature=0</code> y repetir</td></tr>
+    <tr><td><code>dial tcp: lookup ...: no such host</code> a mitad de una espera</td><td>Corte DNS local transitorio</td><td>Reintentar; el job en Databricks no se ve afectado</td></tr>
+    <tr><td><code>apps logs</code> → HTTP 302</td><td>Perfil <code>azure-cli</code> sin OAuth de usuario</td><td>Perfil creado con <code>databricks auth login</code></td></tr>
+  </table>
+</section>
+
+<!-- ============================ C ============================ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">C</div><h2>Código fuente completo</h2></div>
+  <p class="lead">Contenido exacto de cada archivo. En los archivos de jobs, sustituye <code>&lt;TU_USUARIO&gt;</code> por tu usuario del workspace y <code>&lt;WAREHOUSE_ID&gt;</code> por el id obtenido en el Capítulo 3.</p>
+  {{FILE:sql/01_data.sql|Capítulo 4 · datos propios sin datos personales}}
+  {{FILE:sql/02_tools.sql|Capítulo 5 · herramientas SQL de Unity Catalog}}
+  {{FILE:agent/index_spec.json|Capítulo 6 · definición del índice vectorial}}
+  {{FILE:agent/agent.py|Capítulo 7 · el agente}}
+  {{FILE:agent/test_agent.py|Capítulo 8 · prueba de humo}}
+  {{FILE:agent/job_test.json|Capítulo 8 · job de prueba}}
+  {{FILE:agent/log_and_deploy.py|Capítulo 9 · registrar y desplegar}}
+  {{FILE:agent/job_deploy.json|Capítulo 9 · job de despliegue}}
+  {{FILE:agent/evaluate.py|Capítulo 10 · evaluación}}
+  {{FILE:agent/job_eval.json|Capítulo 10 · job de evaluación}}
+  {{FILE:app/app.py|Capítulo 11 · interfaz de chat}}
+  {{FILE:app/app.yaml|Capítulo 11 · configuración de la app}}
+  {{FILE:app/requirements.txt|Capítulo 11 · dependencias de la app}}
+  {{FILE:scripts/run_sql.sh|Capítulos 4–5 · ejecutor de SQL}}
+  {{FILE:scripts/teardown.sh|Capítulo 12 · apagado}}
+</section>
+
+<!-- ============================ D ============================ -->
+<section class="chapter">
+  <div class="chapter-head"><div class="num">D</div><h2>Checklist final</h2></div>
+  <p class="lead">Si todo esto es cierto, replicaste el caso completo.</p>
+  <ul class="check">
+    <li><code>databricks current-user me $P</code> devuelve tu usuario.</li>
+    <li><code>transactions</code> tiene 3333 filas y <code>reviews</code> 204; no existe ninguna columna <code>cardNumber</code>.</li>
+    <li>Las 4 funciones responden; <code>top_franchises(3)</code> empieza por Baked Bliss (6 642 USD).</li>
+    <li>El índice <code>reviews_index</code> muestra <code>"ready": true</code>.</li>
+    <li>El job de prueba responde las 4 preguntas con las herramientas esperadas.</li>
+    <li>El modelo aparece en Unity Catalog con su versión y el endpoint está en <code>READY</code> / <code>NOT_UPDATING</code>.</li>
+    <li>La evaluación da <code>right_tool</code> y <code>has_facts</code> en 1.0.</li>
+    <li>La app está en estado <code>RUNNING</code> y contesta una pregunta desde el navegador, mostrando las herramientas usadas.</li>
+    <li>Ejecutaste <code>teardown.sh pause</code> (o <code>all</code>) al terminar.</li>
+  </ul>
+  <div class="callout note"><span class="l">Siguientes pasos</span><p>Ampliar el dataset de evaluación; probar un juez más fuerte para <code>scope_and_safety</code>; añadir una herramienta de escritura (por ejemplo, registrar una acción de seguimiento) para mostrar permisos de escritura gobernados.</p></div>
+</section>
+
+</body>
+</html>

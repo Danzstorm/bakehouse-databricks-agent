@@ -1,0 +1,15 @@
+{
+  "run_name": "bakehouse-agent-smoke-test",
+  "tasks": [{
+    "task_key": "test",
+    "spark_python_task": {
+      "python_file": "/Workspace/Users/<TU_USUARIO>/bakehouse-agent/test_agent.py",
+      "parameters": ["<WAREHOUSE_ID>", "/Workspace/Users/<TU_USUARIO>/bakehouse-agent"]
+    },
+    "environment_key": "default"
+  }],
+  "environments": [{
+    "environment_key": "default",
+    "spec": {"client": "3", "dependencies": ["mlflow>=3.1", "databricks-sdk>=0.40", "pydantic>=2"]}
+  }]
+}

@@ -1,0 +1,7 @@
+# How Databricks Apps starts the app and which resources it injects.
+command: ["streamlit", "run", "app.py"]
+env:
+  # Name of the agent's serving endpoint. valueFrom reads it from the app resource
+  # called "serving-endpoint" (declared when the app is created), so nothing is hardcoded.
+  - name: SERVING_ENDPOINT
+    valueFrom: serving-endpoint
