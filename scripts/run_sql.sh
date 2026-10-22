@@ -3,7 +3,7 @@
 # Usage: scripts/run_sql.sh sql/01_data.sql [profile]
 # Statements must end with ';' at end of line. Lines starting with '--' are ignored.
 set -euo pipefail
-FILE="$1"; PROFILE="${2:-returns-agent}"
+FILE="$1"; PROFILE="${2:-${PROFILE:-returns-agent}}"
 python - "$FILE" <<'PY' | while IFS= read -r -d '' STMT; do
 import sys,re
 txt=open(sys.argv[1],encoding="utf-8").read()

@@ -1,0 +1,11 @@
+# Copia este archivo a config.local y completa DBX_USER. El resto tiene valores por defecto.
+#   cp config.example config.local
+DBX_USER=tu_usuario@dominio.com
+PROFILE=returns-agent
+RG=rg-returns-agent
+LOCATION=eastus2
+
+# DBX_USER: tu usuario en Azure/Databricks (el correo con el que haces az login).
+# PROFILE:  nombre del perfil de la Databricks CLI que crea 01_infra.sh.
+# RG:       grupo de recursos de Azure.
+# LOCATION: region (debe tener Vector Search y Foundation Model APIs).

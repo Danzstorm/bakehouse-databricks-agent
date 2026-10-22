@@ -132,9 +132,36 @@ Fuentes: [precios de Foundation Model Serving](https://www.databricks.com/produc
 
 ---
 
-## Cómo replicarlo (resumen)
+## Desplegarlo sin un asistente de IA
 
-Cada paso está explicado en detalle, con verificación y errores frecuentes, en la guía PDF. Este es el recorrido corto:
+Todo se despliega con la CLI de Azure y la de Databricks; no hace falta Claude ni ningún otro asistente.
+Los scripts de `scripts/` automatizan los mismos pasos que describe la guía, en orden numerado:
+
+```bash
+az login                                   # una vez
+cp config.example config.local             # y edita DBX_USER con tu usuario
+./scripts/deploy_all.sh                    # ejecuta los seis pasos en orden
+```
+
+| Script | Qué hace |
+|---|---|
+| `scripts/01_infra.sh` | Crea el grupo de recursos y el workspace, el perfil de la CLI y el permiso sobre el catálogo |
+| `scripts/02_data.sh` | Copia los datos de ejemplo sin datos personales y crea las 4 funciones de Unity Catalog |
+| `scripts/03_vector_search.sh` | Crea el endpoint y el índice de Vector Search (**desde aquí factura**) |
+| `scripts/04_agent.sh` | Sube el código, ejecuta la prueba de humo, registra el modelo y lo despliega |
+| `scripts/05_eval.sh` | Ejecuta la evaluación con MLflow |
+| `scripts/06_app.sh` | Crea y despliega la app de chat |
+| `scripts/teardown.sh` | `pause` apaga Vector Search; `all` borra además app, endpoint y grupo de recursos |
+
+Cada script se puede ejecutar por separado. Rellenan solos el usuario y el id del warehouse en las definiciones
+`agent/job_*.json` (los marcadores `<TU_USUARIO>` y `<WAREHOUSE_ID>`), así que no hay que editarlas a mano.
+`config.local` está en `.gitignore`, no se sube al repositorio.
+
+---
+
+## Cómo replicarlo a mano (resumen)
+
+Si prefieres ejecutar cada comando tú mismo, la guía PDF explica cada paso con verificación y errores frecuentes. Este es el recorrido corto:
 
 ```bash
 # 0. Variables de la sesión
@@ -238,7 +265,11 @@ bakehouse-databricks-agent/
 │   ├── evaluate.py              evaluación MLflow
 │   └── job_{test,deploy,eval}.json   definición de cada job serverless
 ├── app/                         app Streamlit (app.py, app.yaml, requirements.txt)
+├── config.example               plantilla de configuración (copiar a config.local)
 └── scripts/
+    ├── lib.sh                   funciones comunes (espera de jobs, plantillas de jobs)
+    ├── 01_infra.sh … 06_app.sh  despliegue paso a paso
+    ├── deploy_all.sh            ejecuta los seis pasos en orden
     ├── run_sql.sh               ejecuta un .sql sentencia a sentencia
     └── teardown.sh              apaga lo que cuesta
 ```
